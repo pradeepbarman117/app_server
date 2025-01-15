@@ -1,0 +1,42 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
+    "mysql2": "^3.12.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "sequelize": "^6.37.5",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.6.2"
+  },
+  "_moduleAliases": {
+    "@root": "./src",
+    "@config": "./src/config",
+    "@controllers": "./src/controllers",
+    "@models": "./src/models",
+    "@routes": "./src/routes",
+    "@services": "./src/services",
+    "@utils": "./src/utils",
+    "@helpers":"./src/helpers"
+  }
+}
