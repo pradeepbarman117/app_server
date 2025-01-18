@@ -6,8 +6,8 @@ const masterSchema = Joi.object({
     email: Joi.string().email().required(), // Email should be valid
     password: Joi.string().min(8).max(30).required(), // Password should be between 8 and 30 characters
     passcode: Joi.string().min(4).max(4).required(), // Passcode should be at least 4 characters
-    adminId:Joi.string().min(1).max(2).required(),
     percent:Joi.string().min(1).max(3).required(),
+    // uuid: Joi.string().uuid().optional(),
 }).options({ abortEarly: false });  // Collect all validation errors
 
 module.exports = masterSchema

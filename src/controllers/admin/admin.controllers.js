@@ -35,6 +35,7 @@ const loginAdmin = async (req, res) => {
     try {
         const { email, password,passcode } = req.body;
         const user = await db.admin.findOne({where: { email }});
+        
         if (!user || !(await comparePassword(password, user.password)) || !(await comparePassword(passcode, user.passcode))) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -71,18 +72,6 @@ const getAdmins = async (req, res) => {
     }
 }
 
-
-const getAdminWithMaster = async (req, res) => {
-    try {
-        const admins = await db.admin.findByPk({
-            attributes:['id','name','email'],
-            include:[{model:db.master,as:'masters'}]
-        });
-        res.status(200).json(admins);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-}
 
 
 module.exports = { createAdmin, getAdmins, loginAdmin };

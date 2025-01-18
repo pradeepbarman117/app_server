@@ -3,6 +3,7 @@ const router = express.Router();
 
 const adminRoute = require('./admin/admin.routes') // Import the admin routes.
 const masterRoute = require('./master/master.routes') // Import the admin routes.
+const userRoute = require('./user/user.routes') // Import the admin routes.
 
 const protectedRoute = require('./protected/protected.routes'); // Import the protected routes.
 
@@ -13,6 +14,11 @@ router.use(adminRoute); // Use the admin routes.
 
 // Master Routes
 router.use(masterRoute);
+
+
+// User Routes
+router.use(userRoute);
+
 
 
 // Private Routes

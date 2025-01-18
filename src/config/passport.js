@@ -6,6 +6,7 @@ const Master = db.master;
 const passport = require('passport');
 const CryptoJS = require('crypto-js');
 const roles = require('./roles');
+const { where } = require('sequelize');
 
 
 // JWT options for extracting token and validating it
@@ -17,6 +18,9 @@ const opts = {
 
 
 const getUserByRole = async (designation, uuid) => {
+
+    console.log(designation === roles.MASTER);
+
     switch (designation) {
         case process.env.USER_CODE:
             return await User.findOne({ where: { uuid } });
@@ -32,19 +36,23 @@ const getUserByRole = async (designation, uuid) => {
 // JWT Strategy for Passport
 passport.use(
     new JwtStrategy(opts, async (jwt_payload, done) => {
-        // console.log(jwt_payload,'jwt_payload')
         try {
             // Decrypt the payload
             const decryptedPayloadBytes = CryptoJS.AES.decrypt(jwt_payload.data, process.env.JWT_ENCRYPTION_KEY);
             const decryptedPayload = JSON.parse(decryptedPayloadBytes.toString(CryptoJS.enc.Utf8));
-
+            // let testData = await Master.findOne({where:{uuid:decryptedPayload.uuid}});
             const user = await getUserByRole(decryptedPayload.designation, decryptedPayload.uuid);
-
+            
             if (!user) {
                 return done(null, false, { message: 'User not found' });
             }
-
-            return done(null, user); // If user exists, return user object
+            const currentUser = {
+                id: user.id,
+                designation: user.designation,
+                uuid: user.uuid,
+                name:user.name
+            }
+            return done(null, currentUser); // If user exists, return user object
         } catch (err) {
             return done(err, false);
         }
