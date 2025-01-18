@@ -24,7 +24,9 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "sequelize": "^6.37.5",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
@@ -37,6 +39,6 @@
     "@routes": "./src/routes",
     "@services": "./src/services",
     "@utils": "./src/utils",
-    "@helpers":"./src/helpers"
+    "@helpers": "./src/helpers"
   }
 }

@@ -1,11 +1,21 @@
-const {  DataTypes } = require('sequelize')
+const { DataTypes } = require('sequelize')
 
 module.exports = (sequelize) => {
-    const userScheama = sequelize.define('user', {
+    const User = sequelize.define('user', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
+        },
+        uuid: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            unique: true,
+        },
+        userId:{
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
         },
         name: {
             type: DataTypes.STRING,
@@ -15,10 +25,14 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: true,
             validate: {
-                isEmail: true,  // Email validation
+                isEmail: true,
             },
         },
         password: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        passcode: {
             type: DataTypes.STRING,
             allowNull: false,
         },
@@ -30,10 +44,28 @@ module.exports = (sequelize) => {
                 is: /^d26ced-80ede$/,
             },
         },
+        masterId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'masters',
+                key: 'id',
+            },
+            index: true,
+        },
+        adminId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'admins',
+                key: 'id',
+            },
+            index: true,
+        },
         coin: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            default: 0,
+            defaultValue: 0,
         },
         blacklist: {
             type: DataTypes.BOOLEAN,
@@ -50,11 +82,10 @@ module.exports = (sequelize) => {
         },
         updatedAt: {
             type: DataTypes.DATE,
-        }
-    },
-        {
-            timestamps: true,
         },
-    );
-    return userScheama;
+    }, {
+        timestamps: true,
+        paranoid: true,
+    });
+    return User;
 }

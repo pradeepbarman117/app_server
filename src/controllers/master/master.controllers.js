@@ -2,12 +2,16 @@ const db = require('@models/index');
 const { hashPassword } = require('@helpers/bcrypt');
 const roles = require('../../config/roles');
 const { emitMasterAdded } = require('../../services/socket/master/masterSocket');
+const { comparePassword } = require('../../helpers/bcrypt');
+const generateToken = require('../../helpers/generateToken');
 
 const createMaster = async (req, res) => {
     try {
-        const { name, email, password, passcode, adminId, percent } = req.body;
-
-
+        const { name, email, password, passcode, percent } = req.body;
+        const adminId = req.user.id
+        if (!adminId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
         const isExist = await db.master.findOne({ where: { email } })
 
         if (isExist) {
@@ -41,16 +45,15 @@ const createMaster = async (req, res) => {
 
 const getMasters = async (req, res) => {
     try {
-        const adminId = req.user.id;
         const masters = await db.master.findAll({
             include: [
                 {
                     model: db.admin,
-                    as: 'creator',
+                    as: 'admin',
                     attributes: ['id', 'name', 'email']
                 }
             ],
-            attributes:['name','percent','email','adminId','createdAt','id']
+            attributes: ['name', 'percent', 'email', 'adminId', 'createdAt', 'id']
         });
 
         if (!masters.length) {
@@ -67,6 +70,36 @@ const getMasters = async (req, res) => {
 }
 
 
+// Login
+const masterLogin = async (req, res) => {
+    try {
+        const { email, password, passcode } = req.body;
+        console.log(req.body, 'req.body')
+        const user = await db.master.findOne({ where: { email } });
+
+        if (!user || !(await comparePassword(password, user.password)) || !(await comparePassword(passcode, user.passcode))) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        const token = await generateToken({
+            userId: user.id,
+            uuid: user.uuid,
+            designation: user.designation,
+        });
+        res.status(200).json({
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                designation: 'master',
+                uuid: user.uuid,
+            },
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ err });
+    }
+};
 
 
-module.exports = { createMaster, getMasters }
+
+module.exports = { createMaster, getMasters, masterLogin }

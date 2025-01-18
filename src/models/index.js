@@ -94,17 +94,17 @@ db.Sequelize = Sequelize;
 
 
 ////////  Relationship between models ////////////
+// Define associations between admin, master, and user models
 
-//**************  ADMIN TO MASTER  *******************/
-db.admin.hasMany(db.master,{
-  foreignKey: 'adminId',
-  as:'masters', // Alias
-});
-db.master.belongsTo(db.admin,{
-  foreignKey: 'adminId',
-  as:'creator', // Alias
-})
-
+// Admin to Master
+db.admin.hasMany(db.master, { foreignKey: 'adminId', as: 'masters' });
+db.master.belongsTo(db.admin, { foreignKey: 'adminId', as: 'admin' });
+// Admin to User relationship
+db.admin.hasMany(db.user, { foreignKey: 'adminId', as: 'adminUsers' });
+db.user.belongsTo(db.admin, { foreignKey: 'adminId', as: 'admin' });
+// Master to User relationship
+db.master.hasMany(db.user, { foreignKey: 'masterId', as: 'masterUsers' });
+db.user.belongsTo(db.master, { foreignKey: 'masterId', as: 'master' });
 
 
 

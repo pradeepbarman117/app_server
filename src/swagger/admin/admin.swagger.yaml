@@ -1,0 +1,102 @@
+openapi: 3.0.0
+info:
+  title: Admin API Documentation
+  description: API endpoints for managing Admin operations
+  version: 1.0.0
+
+tags:
+  - name: Admin
+    description: Endpoints related to Admin operations
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Admin:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the admin
+        name:
+          type: string
+          description: Name of the admin
+        email:
+          type: string
+          description: Email address of the admin
+
+paths:
+  /api/auth/create:
+    post:
+      tags:
+        - Admin
+      summary: Create a new admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Admin'
+      responses:
+        201:
+          description: Admin created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Admin'
+        400:
+          description: Invalid request body
+
+  /api/get:
+    get:
+      tags:
+        - Admin
+      summary: Get all admins
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Admins retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Admin'
+        500:
+          description: Internal server error
+
+  /api/auth/login:
+    post:
+      tags:
+        - Admin
+      summary: Login admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                passcode:
+                  type: string
+      responses:
+        200:
+          description: Admin logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        401:
+          description: Invalid credentials

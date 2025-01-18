@@ -11,6 +11,12 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        uuid:{
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            allowNull: false,
+            unique:true,
+        },
         email: {
             type: DataTypes.STRING,
             unique: true,
@@ -25,10 +31,10 @@ module.exports = (sequelize) => {
         },
         designation: {
             type:DataTypes.STRING,
-            defaultValue:'4csff-b005',
+            defaultValue:'4csff-b005-',
             allowNull: false,
             validate: {
-                is: /^4csff-b005$/,
+                is: /^4csff-b005-$/,
             },
         },
         passcode: {

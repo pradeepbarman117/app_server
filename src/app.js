@@ -5,6 +5,9 @@ require('dotenv').config();
 const cors = require('cors');
 const helmet = require('helmet');
 require('./config/passport');
+const swaggerSpec = require('./swagger/swagger');
+const swaggerUi = require('swagger-ui-express');
+
 
 // ----------- Impliment Middlewares --------- //
 app.use(express.json());
@@ -17,6 +20,9 @@ app.use(helmet({
     frameguard: { action: 'deny' },
 }));
 
+
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 // ----------- End Impliment Middlewares --------- //
@@ -36,8 +42,6 @@ const db = require('./models/index');
 
 // Impliment Index Routes
 const indexRoutes = require('./routes/index.routes');
-const { hidePoweredBy } = require('helmet');
-const { xXssProtection } = require('helmet');
 app.use('/api', indexRoutes);
 
 
