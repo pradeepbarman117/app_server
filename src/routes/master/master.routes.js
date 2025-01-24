@@ -1,36 +1,48 @@
-const { createMaster, getMasters, masterLogin } = require('@controllers/master/master.controllers');
-const validateRequest = require('../../middlewares/validateRequest');
-const passport = require('passport');
-const masterSchema = require('../../validators/masterValidator');
-const { authorizeRoles } = require('../../config/passport');
-const roles = require('../../config/roles');
-const authSchema = require('../../validators/authValidator');
+const {
+  createMaster,
+  getMasters,
+  masterLogin,
+  getMasterById,
+} = require("@controllers/master/master.controllers");
+const validateRequest = require("../../middlewares/validateRequest");
+const passport = require("passport");
+const masterSchema = require("../../validators/masterValidator");
+const { authorizeRoles } = require("../../config/passport");
+const roles = require("../../config/roles");
+const authSchema = require("../../validators/authValidator");
 
-const router = require('express').Router();
+const router = require("express").Router();
 
-
-
-
-router.post('/auth/master/login',
-    // Callback Function
-    validateRequest(authSchema),
-    masterLogin
+router.post(
+  "/auth/master/login",
+  // Callback Function
+  validateRequest(authSchema),
+  masterLogin
 );
 
-router.post('/master/create',
-    validateRequest(masterSchema),
-    passport.authenticate('jwt', { session: false }),
-    authorizeRoles(roles.ADMIN),
-    // Callback Function
-    createMaster
+router.post(
+  "/master/create",
+  validateRequest(masterSchema),
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles(roles.ADMIN),
+  // Callback Function
+  createMaster
 );
 
-router.get('/master/get',
-    passport.authenticate('jwt', { session: false }),
-    authorizeRoles(roles.ADMIN),
-    // Callback Function
-    getMasters
-)
+router.get(
+  "/master/getall",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles(roles.ADMIN),
+  // Callback Function
+  getMasters
+);
 
+router.get(
+  "/master/get/:id",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles(roles.ADMIN),
+  // Callback Function
+  getMasterById
+);
 
-module.exports = router
+module.exports = router;
