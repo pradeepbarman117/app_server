@@ -19,8 +19,6 @@ const opts = {
 
 const getUserByRole = async (designation, uuid) => {
 
-    console.log(designation === roles.MASTER);
-
     switch (designation) {
         case process.env.USER_CODE:
             return await User.findOne({ where: { uuid } });
