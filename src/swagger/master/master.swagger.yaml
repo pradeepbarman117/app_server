@@ -80,6 +80,41 @@ paths:
         401:
           description: Authentication failed
 
+  /api/master/get/{id}:
+    get:
+      tags:
+        - Master
+      summary: Get a master by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Master ID
+      responses:
+        200:
+          description: Master found successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Master'
+                  source:
+                    type: string
+        400:
+          description: Invalid request
+        401:
+          description: Authentication failed
+        403:
+          description: Unauthorized access
+        404:
+          description: Master not found
+
 components:
   securitySchemes:
     bearerAuth:

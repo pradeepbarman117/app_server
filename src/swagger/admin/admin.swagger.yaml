@@ -51,25 +51,6 @@ paths:
         400:
           description: Invalid request body
 
-  /api/get:
-    get:
-      tags:
-        - Admin
-      summary: Get all admins
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: Admins retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Admin'
-        500:
-          description: Internal server error
-
   /api/auth/login:
     post:
       tags:
@@ -100,3 +81,22 @@ paths:
                     type: string
         401:
           description: Invalid credentials
+
+  /api/get:
+    get:
+      tags:
+        - Admin
+      summary: Get all admins
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Admins retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Admin'
+        500:
+          description: Internal server error
