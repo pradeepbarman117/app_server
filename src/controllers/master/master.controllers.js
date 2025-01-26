@@ -3,6 +3,7 @@ const { hashPassword, comparePassword } = require("@helpers/bcrypt");
 const generateToken = require("../../helpers/generateToken");
 const {
   emitMasterAdded,
+  emitMasterUpdated,
 } = require("../../services/socket/master/masterSocket");
 const { redisClient } = require("../../config/redis");
 
@@ -52,6 +53,8 @@ const createMaster = async (req, res) => {
       attributes: ["name", "percent", "email", "adminId", "createdAt", "id"],
     });
 
+    // Clear master list cache
+    await redisClient.del('masters:list');
     emitMasterAdded(masterWithAdmin); // Real-time notification
 
     res.status(201).json({
@@ -70,6 +73,35 @@ const createMaster = async (req, res) => {
     handleError(res, err);
   }
 };
+
+const updateMaster = async (req, res)=>{
+  try{
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const master = await db.master.findByPk(id);
+
+    if(!master){
+      return handleError(res, new Error("Master not found"), 404);
+    }
+
+    const updatedMaster = await master.update(updateData);
+
+    await redisClient.del(`master:${id}`);
+    await redisClient.del(`masters:list`);
+    emitMasterUpdated(updatedMaster);
+    emitMasterAdded(updatedMaster);
+
+    res.status(200).send({
+      message: "Master updated successfully",
+      data: updatedMaster,
+      success: true,
+    });
+
+  }catch(err){
+    return handleError(res, err);
+  }
+}
 
 const getMasters = async (req, res) => {
   try {
@@ -142,7 +174,7 @@ const getMasterById = async (req, res) => {
       include: [
         { model: db.admin, as: "admin", attributes: ["id", "name", "email"] },
       ],
-      attributes: ["name", "percent", "email", "adminId", "createdAt", "id"],
+      attributes: ["name", "percent", "email", "adminId", "createdAt", "id","blacklist"],
     });
 
     if (!master) {
@@ -211,26 +243,4 @@ const masterLogin = async (req, res) => {
   }
 };
 
-
-
-// const updateMaster = async (req, res) => {
-//     try {
-//       // Existing update logic
-//       const updatedMaster = await db.master.update(
-//         req.body, 
-//         { where: { id: req.params.id } }
-//       );
-  
-//       // Invalidate masters cache
-//       await redisClient.del('masters:list');
-  
-//       res.json({
-//         message: "Master updated successfully",
-//         data: updatedMaster
-//       });
-//     } catch (error) {
-//       handleError(res, error);
-//     }
-//   };
-
-module.exports = { createMaster, getMasters, masterLogin, getMasterById };
+module.exports = { createMaster, getMasters, masterLogin, getMasterById, updateMaster };
