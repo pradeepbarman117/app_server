@@ -17,10 +17,15 @@ module.exports = (sequelize) => {
             allowNull: false,
             unique:true,
         },
+        userId:{
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
         email: {
             type: DataTypes.STRING,
             unique: true,
-            allowNull: false,
+            allowNull: true,
             validate: {
                 isEmail: true,  // Email validation
             },
@@ -53,10 +58,35 @@ module.exports = (sequelize) => {
             type:DataTypes.INTEGER,
             allowNull:false,
         },
+        coin:{
+            type:DataTypes.INTEGER,
+            allowNull:false,
+            defaultValue:0
+        },
         blacklist: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false,
+        },
+        lastLogin:{
+            type:DataTypes.DATE,
+            allowNull:true,
+        },
+        lastIp:{
+            type:DataTypes.STRING,
+            allowNull:true,
+        },
+        lastDevice:{
+            type:DataTypes.STRING,
+            allowNull:true,
+        },
+        lastLocation:{
+            type:DataTypes.STRING,
+            allowNull:true,
+        },
+        deletedAt:{
+            type:DataTypes.DATE,
+            allowNull:true,
         },
         createdAt: {
             type: DataTypes.DATE,
@@ -71,3 +101,4 @@ module.exports = (sequelize) => {
     );
     return masterSchema;
 }
+

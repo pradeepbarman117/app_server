@@ -46,7 +46,6 @@ router.get(
   getMasterById
 );
 
-
 router.patch(
   "/master/update/:id",
   passport.authenticate("jwt", { session: false }),

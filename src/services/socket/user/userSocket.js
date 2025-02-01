@@ -1,13 +1,16 @@
+
 const { getSocketInstance } = require("../../../socket");
 const redis = require('redis');
+
 
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
 
+
 redisClient.connect().catch(console.error);
 
-const setupMasterSocket = () => {
+const setupUserSocket = () => {
   const io = getSocketInstance();
   
   io.on("connection", (socket) => {
@@ -23,33 +26,35 @@ const setupMasterSocket = () => {
   });
 };
 
-const emitMasterAdded = async (master) => {
+
+const emitUserAdded = async (master) => {
   const io = getSocketInstance();
   
   // Broadcast to all clients
-  io.emit("masterAdded", master);
+  io.emit("userAdded", master);
   
   // Store in Redis for persistence
-  await redisClient.hSet('masters', master.id.toString(), JSON.stringify(master));
+  await redisClient.hSet('users', master.id.toString(), JSON.stringify(master));
 };
 
-const emitMasterUpdated = async (master) => {
+
+const emitUserUpdated = async (master) => {
   const io = getSocketInstance();
   
   // Broadcast to all clients
-  io.emit("masterUpdated", master);
+  io.emit("userUpdated", master);
   
   // Update in Redis
-  await redisClient.hSet('masters', master.id.toString(), JSON.stringify(master));
+  await redisClient.hSet('users', master.id.toString(), JSON.stringify(master));
 };
 
-const getMasterFromRedis = async (masterId) => {
-  return JSON.parse(await redisClient.hGet('masters', masterId.toString()));
+const getUserFromRedis = async (userId) => {
+  return JSON.parse(await redisClient.hGet('users', userId.toString()));
 };
 
 module.exports = {
-  setupMasterSocket,
-  emitMasterAdded,
-  emitMasterUpdated,
-  getMasterFromRedis
-};
+    setupUserSocket,
+    emitUserAdded,
+    emitUserUpdated,
+    getUserFromRedis
+  };
