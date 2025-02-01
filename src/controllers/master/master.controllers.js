@@ -13,17 +13,15 @@ const handleError = (res, error, statusCode = 500) => {
   res.status(statusCode).json({ message, success: false });
 };
 
-
-
 const createMaster = async (req, res) => {
   try {
-    const { name, email, password, passcode, percent } = req.body;
+    const { name, email, password, passcode, percent, userId } = req.body;
     const adminId = req.user.id;
 
     if (!adminId)
       return res.status(401).json({ message: "Unauthorized", success: false });
 
-    const existingMaster = await db.master.findOne({ where: { email } });
+    const existingMaster = await db.master.findOne({ where: { userId } });
     if (existingMaster)
       return res
         .status(400)
@@ -38,6 +36,7 @@ const createMaster = async (req, res) => {
     const master = await db.master.create({
       name,
       email,
+      userId,
       password: hashedPassword,
       passcode: hashedPasscode,
       adminId,
@@ -50,7 +49,7 @@ const createMaster = async (req, res) => {
       include: [
         { model: db.admin, as: "admin", attributes: ["id", "name", "email"] },
       ],
-      attributes: ["name", "percent", "email", "adminId", "createdAt", "id"],
+      attributes: ["name", "percent", "email", "adminId", "createdAt", "id","userId"],
     });
 
     // Clear master list cache
@@ -118,10 +117,10 @@ const getMasters = async (req, res) => {
         source: "cache",
       });
     }
-
+    
     // If no cache, fetch from database
     const masters = await db.master.findAll({
-    attributes: ['name', 'percent', 'email', 'adminId', 'createdAt', 'id'],
+    attributes: ['name', 'percent', 'email', 'adminId', 'createdAt', 'id','userId'],
       include:[
         {
             model: db.admin, as: 'admin', attributes: ['id', 'name', 'email',]
