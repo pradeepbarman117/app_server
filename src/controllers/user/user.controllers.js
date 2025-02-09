@@ -99,7 +99,6 @@ const getUser = async (req, res) => {
 
 const getMasterUser = async (req, res) => {
   try {
-
     
     const { id } = req.params;
     // Check if the ID is provided
@@ -107,9 +106,56 @@ const getMasterUser = async (req, res) => {
       return res.status(400).send({ message: "ID is required" });
     }
 
-    console.log(id,'id')
-
     const CACHE_KEY = `master:user:${id}`;
+    const CACHE_EXPIRY = 300;
+
+    const cachedUsers = await redisClient.get(CACHE_KEY);
+    if (cachedUsers) {
+      return res.json({
+        data: JSON.parse(cachedUsers),
+        source: "cache",
+      });
+    }
+
+    // If no cache, fetch from database
+    const users = await db.user.findAll({
+      where: { masterId: id },
+      attributes: ["id", "uuid", "coin", "status", "createdAt","userId"],
+      include: [
+        {
+          model: db.master,
+          as: "master",
+          attributes: ["id", "uuid", "name"],
+        },
+      ],
+    });
+
+    // Cache the result for 5 minutes
+    await redisClient.setEx(
+      CACHE_KEY,
+      CACHE_EXPIRY,
+      JSON.stringify(users)
+    )
+
+    return res.status(200).send({
+      message: "Users created by master retrieved successfully",
+      data:users,
+    });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
+  }
+};
+
+const getAllMasterUser = async (req, res) => {
+  try {
+    
+    const id = req.user.id;
+    // Check if the ID is provided
+    if (!id) {
+      return res.status(400).send({ message: "ID is required" });
+    }
+
+    const CACHE_KEY = `master:allUser:${id}`;
     const CACHE_EXPIRY = 300;
 
     const cachedUsers = await redisClient.get(CACHE_KEY);
@@ -172,4 +218,4 @@ const getAdminUser = async (req, res) => {
   }
 };
 
-module.exports = { getUser, createUser, getMasterUser, getAdminUser };
+module.exports = { getUser, createUser, getMasterUser, getAdminUser, getAllMasterUser };
