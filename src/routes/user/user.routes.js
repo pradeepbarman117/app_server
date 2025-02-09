@@ -4,6 +4,7 @@ const {
   createUser,
   getMasterUser,
   getAdminUser,
+  getAllMasterUser
 } = require("@controllers/user/user.controllers");
 const { authorizeRoles } = require("../../config/passport");
 const roles = require("../../config/roles");
@@ -39,6 +40,20 @@ router.get(
   }
 );
 
+
+router.get(
+  "/master/user/all",
+  passport.authenticate("jwt", { session: false, failWithError: true }),
+  authorizeRoles([roles.MASTER, roles.ADMIN]),
+  async (req, res, next) => {
+    try {
+      await getAllMasterUser(req, res);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 router.get(
   "/master/user/:id",
   passport.authenticate("jwt", { session: false, failWithError: true }),
@@ -51,6 +66,9 @@ router.get(
     }
   }
 );
+
+
+
 
 router.get(
   "/admin/user",

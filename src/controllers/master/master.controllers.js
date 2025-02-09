@@ -234,6 +234,7 @@ const masterLogin = async (req, res) => {
         name: user.name,
         designation: "master",
         uuid: user.uuid,
+        userId:user.userId,
       },
       success: true,
     });
