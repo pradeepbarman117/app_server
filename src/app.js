@@ -8,7 +8,6 @@ require('./config/passport');
 const swaggerSpec = require('./swagger/swagger');
 const swaggerUi = require('swagger-ui-express');
 
-
 // ----------- Impliment Middlewares --------- //
 app.use(express.json());
 app.use(cors());
@@ -42,7 +41,9 @@ const db = require('./models/index');
 
 // Impliment Index Routes
 const indexRoutes = require('./routes/index.routes');
+const oddsRoutes = require('./routes/odds.routes');
 app.use('/api', indexRoutes);
+app.use('/api/odds', oddsRoutes);
 
 
 

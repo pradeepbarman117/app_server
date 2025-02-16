@@ -1,34 +1,3 @@
-// const redis = require('redis');
-
-// let redisClient;
-
-// const initializeRedis = () => {
-//   redisClient = redis.createClient({
-//     url: 'redis://localhost:6379', // Update this URL if needed
-//   });
-
-//   redisClient.on('error', (err) => {
-//     console.error('Redis error:', err);
-//   });
-
-//   redisClient.connect().then(() => {
-//     console.log('Connected to Redis');
-//   });
-
-//   return redisClient;
-// };
-
-// const getRedisClient = () => {
-//   if (!redisClient) {
-//     throw new Error('Redis client not initialized');
-//   }
-//   return redisClient;
-// };
-
-// module.exports = { initializeRedis, getRedisClient };
-
-
-
 const redis = require('redis');
 
 const redisClient = redis.createClient({
