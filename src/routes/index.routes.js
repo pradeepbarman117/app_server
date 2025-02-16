@@ -10,15 +10,11 @@ const protectedRoute = require('./protected/protected.routes'); // Import the pr
 // Admin Routes
 router.use(adminRoute); // Use the admin routes.
 
-
-
 // Master Routes
 router.use(masterRoute);
 
-
 // User Routes
 router.use(userRoute);
-
 
 
 // Private Routes
