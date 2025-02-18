@@ -67,6 +67,21 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: 0,
         },
+        credit_ref:{
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 3_00_000,
+        },
+        exposure:{
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1_00_000,
+        },
+        exposure_limit:{
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1_00_000,
+        },
         blacklist: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
