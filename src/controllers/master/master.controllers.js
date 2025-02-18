@@ -9,6 +9,7 @@ const { redisClient } = require("../../config/redis");
 
 // Helper for uniform error response
 const handleError = (res, error, statusCode = 500) => {
+  console.log(error)
   const message = error.message || "An error occurred";
   res.status(statusCode).json({ message, success: false });
 };

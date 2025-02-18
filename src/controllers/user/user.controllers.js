@@ -17,6 +17,15 @@ const createUser = async (req, res) => {
       hashPassword(passcode),
     ]);
 
+
+    const existingUser = await db.user.findOne({ where: { userId } });
+    if (existingUser) {
+      return res.status(400).send({
+        message: "User  ID already exists",
+        success: false,
+      });
+    }
+
     const user = await db.user.create({
       userId: userId,
       password: hashedPassword,
@@ -25,24 +34,27 @@ const createUser = async (req, res) => {
       adminId,
     });
 
+
     // Fetch created master with admin details
     const userWithMaster = await db.user.findOne({
       where: { id: user.id },
       include: [
-        { model: db.master, as: "master", attributes: ["id", "name","uuid"] },
+        { model: db.master, as: "master", attributes: ["id", "name", "uuid"] },
       ],
-      attributes: ["name", "percent", "status", "coin", "adminId", "createdAt", "id","userId"],
+      attributes: {
+        exclude:["name","email","password","passcode","designation","deletedAt"]
+      },
     });
 
-    // emitUserAdded(userWithMaster);
+    emitUserAdded(userWithMaster);
 
     res.status(201).send({
       message: "User created successfully",
-      user:userWithMaster,
+      user: userWithMaster,
       success: true,
     });
   } catch (err) {
-    // console.error(err);
+    console.log(err)
     res.status(500).send({ message: err.message });
   }
 };
@@ -90,7 +102,7 @@ const getUser = async (req, res) => {
     return res.status(200).send({
       message: "Users retrieved successfully",
       users,
-      source:'database'
+      source: 'database'
     });
   } catch (err) {
     return res.status(500).send({ message: err.message });
@@ -99,7 +111,7 @@ const getUser = async (req, res) => {
 
 const getMasterUser = async (req, res) => {
   try {
-    
+
     const { id } = req.params;
     // Check if the ID is provided
     if (!id) {
@@ -120,7 +132,7 @@ const getMasterUser = async (req, res) => {
     // If no cache, fetch from database
     const users = await db.user.findAll({
       where: { masterId: id },
-      attributes: ["id", "uuid", "coin", "status", "createdAt","userId"],
+      attributes: ["id", "uuid", "coin", "status", "createdAt", "userId"],
       include: [
         {
           model: db.master,
@@ -139,7 +151,7 @@ const getMasterUser = async (req, res) => {
 
     return res.status(200).send({
       message: "Users created by master retrieved successfully",
-      data:users,
+      data: users,
     });
   } catch (err) {
     return res.status(500).send({ message: err.message });
@@ -148,7 +160,7 @@ const getMasterUser = async (req, res) => {
 
 const getAllMasterUser = async (req, res) => {
   try {
-    
+
     const id = req.user.id;
     // Check if the ID is provided
     if (!id) {
@@ -168,7 +180,9 @@ const getAllMasterUser = async (req, res) => {
 
     // If no cache, fetch from database
     const users = await db.user.findAll({
-      attributes: ["id", "uuid", "coin", "status", "createdAt","userId"],
+      attributes: {
+        exclude:["name","email","password","passcode","designation","deletedAt"]
+      },
       include: [
         {
           model: db.master,
@@ -188,7 +202,7 @@ const getAllMasterUser = async (req, res) => {
 
     return res.status(200).send({
       message: "Users created by master retrieved successfully",
-      data:users,
+      data: users,
     });
   } catch (err) {
     return res.status(500).send({ message: err.message });

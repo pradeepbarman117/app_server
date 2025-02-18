@@ -14,7 +14,7 @@ const sportControllers = async (req, res) => {
 
         if (cachedSports) {
             return res.json({
-                data: JSON.parse(cachedSports),
+                sports: JSON.parse(cachedSports),
                 source: "cache",
             });
         }
