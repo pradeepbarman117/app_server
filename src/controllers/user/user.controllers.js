@@ -1,8 +1,39 @@
 const db = require("@models/index");
 const roles = require("../../config/roles");
-const { hashPassword } = require("@helpers/bcrypt");
+const { hashPassword, comparePassword } = require("@helpers/bcrypt");
 const { redisClient } = require("../../config/redis");
+const generateToken = require("../../helpers/generateToken");
 const { emitUserAdded } = require("../../services/socket/user/userSocket");
+
+
+const loginUser = async (req, res) => {
+  try {
+    const { userId, password} = req.body;
+    const user = await db.user.findOne({ where: { userId } });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credintials" });
+    }
+    const isValidPassword = await comparePassword(password, user.password);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ message: "Invalid credintials" });
+    }
+    const token = await generateToken({
+      userId: user.id,
+      uuid: user.uuid,
+      designation: user.designation,
+    });
+
+    return res.status(200).json({ token });
+
+  } catch (error) {
+    console.log('error',error)
+    return res.status(500).send({
+      message: "Internal Server Error",
+      success:false,
+    });
+  }
+}
 
 const createUser = async (req, res) => {
   try {
@@ -42,7 +73,7 @@ const createUser = async (req, res) => {
         { model: db.master, as: "master", attributes: ["id", "name", "uuid"] },
       ],
       attributes: {
-        exclude:["name","email","password","passcode","designation","deletedAt"]
+        exclude: ["name", "email", "password", "passcode", "designation", "deletedAt"]
       },
     });
 
@@ -181,7 +212,7 @@ const getAllMasterUser = async (req, res) => {
     // If no cache, fetch from database
     const users = await db.user.findAll({
       attributes: {
-        exclude:["name","email","password","passcode","designation","deletedAt"]
+        exclude: ["name", "email", "password", "passcode", "designation", "deletedAt"]
       },
       include: [
         {
@@ -232,4 +263,4 @@ const getAdminUser = async (req, res) => {
   }
 };
 
-module.exports = { getUser, createUser, getMasterUser, getAdminUser, getAllMasterUser };
+module.exports = { getUser, createUser, getMasterUser, getAdminUser, getAllMasterUser, loginUser };

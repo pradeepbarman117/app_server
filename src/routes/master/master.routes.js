@@ -11,13 +11,14 @@ const masterSchema = require("../../validators/masterValidator");
 const { authorizeRoles } = require("../../config/passport");
 const roles = require("../../config/roles");
 const authSchema = require("../../validators/authValidator");
+const masterAuthSchema = require("../../validators/master/masterAuthValidator");
 
 const router = require("express").Router();
 
 router.post(
   "/auth/master/login",
   // Callback Function
-  validateRequest(authSchema),
+  validateRequest(masterAuthSchema),
   masterLogin
 );
 

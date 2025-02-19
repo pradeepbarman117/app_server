@@ -108,5 +108,4 @@ db.user.belongsTo(db.master, { foreignKey: 'masterId', as: 'master' });
 
 
 
-
 module.exports = db;

@@ -4,20 +4,24 @@ const {
   createUser,
   getMasterUser,
   getAdminUser,
-  getAllMasterUser
+  getAllMasterUser,
+  loginUser
 } = require("@controllers/user/user.controllers");
 const { authorizeRoles } = require("../../config/passport");
 const roles = require("../../config/roles");
 const validateRequest = require("../../middlewares/validateRequest");
-const userSchema = require("../../validators/userValidator");
+const { userSchemaCreate,userSchemaLogin } = require("../../validators/userValidator");
 
 const router = require("express").Router();
 
+
+router.post('/user/auth/login', validateRequest(userSchemaLogin), loginUser);
+
 router.post(
   "/user/create",
-  validateRequest(userSchema),
   passport.authenticate("jwt", { session: false, failWithError: true }),
   authorizeRoles([roles.MASTER, roles.ADMIN]),
+  validateRequest(userSchemaCreate),
   async (req, res, next) => {
     try {
       await createUser(req, res);
@@ -39,7 +43,6 @@ router.get(
     }
   }
 );
-
 
 router.get(
   "/master/user/all",
@@ -66,9 +69,6 @@ router.get(
     }
   }
 );
-
-
-
 
 router.get(
   "/admin/user",

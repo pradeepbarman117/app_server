@@ -42,8 +42,11 @@ const db = require('./models/index');
 // Impliment Index Routes
 const indexRoutes = require('./routes/index.routes');
 const oddsRoutes = require('./routes/odds.routes');
+const financeRoute = require('./routes/finance.routes');
+
 app.use('/api', indexRoutes);
 app.use('/api/odds', oddsRoutes);
+app.use('/api/finance', financeRoute);
 
 
 
