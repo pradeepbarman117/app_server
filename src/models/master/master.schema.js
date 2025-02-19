@@ -1,5 +1,6 @@
 
-const { DataTypes } = require('sequelize');
+const { DataTypes,NOW } = require('sequelize');
+
 module.exports = (sequelize) => {
     const masterSchema = sequelize.define('master', {
         id: {
@@ -58,8 +59,8 @@ module.exports = (sequelize) => {
             type:DataTypes.INTEGER,
             allowNull:false,
         },
-        coin:{
-            type:DataTypes.INTEGER,
+        balance:{
+            type:DataTypes.DECIMAL(10,2),
             allowNull:false,
             defaultValue:0
         },
@@ -68,21 +69,9 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: false,
         },
-        lastLogin:{
-            type:DataTypes.DATE,
-            allowNull:true,
-        },
-        lastIp:{
-            type:DataTypes.STRING,
-            allowNull:true,
-        },
-        lastDevice:{
-            type:DataTypes.STRING,
-            allowNull:true,
-        },
-        lastLocation:{
-            type:DataTypes.STRING,
-            allowNull:true,
+        login_history:{
+            type: DataTypes.JSONB,
+            allowNull: true,
         },
         deletedAt:{
             type:DataTypes.DATE,
@@ -90,13 +79,16 @@ module.exports = (sequelize) => {
         },
         createdAt: {
             type: DataTypes.DATE,
+            defaultValue: NOW,
         },
         updatedAt: {
             type: DataTypes.DATE,
+            defaultValue: NOW,
         }
     },
         {
             timestamps: true,
+            paranoid: true,
         }
     );
     return masterSchema;

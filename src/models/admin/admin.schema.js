@@ -24,6 +24,11 @@ module.exports = (sequelize) => {
                 isEmail: true,  // Email validation
             },
         },
+        balance:{
+            type:DataTypes.DECIMAL(10,2),
+            allowNull:false,
+            defaultValue:0
+        },
         password: {
             type: DataTypes.STRING,
             allowNull: false,

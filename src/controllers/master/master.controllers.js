@@ -50,7 +50,7 @@ const createMaster = async (req, res) => {
       include: [
         { model: db.admin, as: "admin", attributes: ["id", "name", "email"] },
       ],
-      attributes: ["name", "percent", "email", "adminId", "createdAt", "id","userId"],
+      attributes: ["name", "percent", "email", "adminId", "createdAt", "id", "userId"],
     });
 
     // Clear master list cache
@@ -74,14 +74,14 @@ const createMaster = async (req, res) => {
   }
 };
 
-const updateMaster = async (req, res)=>{
-  try{
+const updateMaster = async (req, res) => {
+  try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const master = await db.master.findByPk(id);
 
-    if(!master){
+    if (!master) {
       return handleError(res, new Error("Master not found"), 404);
     }
 
@@ -98,7 +98,7 @@ const updateMaster = async (req, res)=>{
       success: true,
     });
 
-  }catch(err){
+  } catch (err) {
     return handleError(res, err);
   }
 }
@@ -118,22 +118,22 @@ const getMasters = async (req, res) => {
         source: "cache",
       });
     }
-    
+
     // If no cache, fetch from database
     const masters = await db.master.findAll({
-    attributes: ['name', 'percent', 'email', 'adminId', 'createdAt', 'id','userId'],
-      include:[
+      attributes: ['name', 'percent', 'email', 'adminId', 'createdAt', 'id', 'userId'],
+      include: [
         {
-            model: db.admin, as: 'admin', attributes: ['id', 'name', 'email',]
+          model: db.admin, as: 'admin', attributes: ['id', 'name', 'email',]
         }
       ]
     });
 
     // Cache entire list with expiration
     await redisClient.setEx(
-        CACHE_KEY, 
-        CACHE_EXPIRY, 
-        JSON.stringify(masters)
+      CACHE_KEY,
+      CACHE_EXPIRY,
+      JSON.stringify(masters)
     );
 
     return res.json({
@@ -148,13 +148,13 @@ const getMasters = async (req, res) => {
 const getMasterById = async (req, res) => {
   try {
     const { id } = req.params; // Extract master ID from request parameters
-    if(!id){
+    if (!id) {
       return res.status(400).json({
         message: 'Master ID is required',
-        success:false,
+        success: false,
       });
     };
-    
+
     const CACHE_KEY = `master:${id}`; // Cache key for Redis
     const CACHE_EXPIRY = 300; // Cache expiry time in seconds (5 minutes)
 
@@ -174,7 +174,7 @@ const getMasterById = async (req, res) => {
       include: [
         { model: db.admin, as: "admin", attributes: ["id", "name", "email"] },
       ],
-      attributes: ["name", "percent", "email", "adminId", "createdAt", "id","blacklist"],
+      attributes: ["name", "percent", "email", "adminId", "createdAt", "id", "blacklist"],
     });
 
     if (!master) {
@@ -198,15 +198,15 @@ const getMasterById = async (req, res) => {
 
 const masterLogin = async (req, res) => {
   try {
-    const { email, password, passcode } = req.body;
+    const { userId, password, passcode } = req.body;
 
-    if (!email || !password || !passcode) {
+    if (!userId || !password || !passcode) {
       return res
         .status(400)
         .json({ message: "All fields are required", success: false });
     }
 
-    const user = await db.master.findOne({ where: { email } });
+    const user = await db.master.findOne({ where: { userId } });
     if (!user)
       return res
         .status(401)
@@ -220,6 +220,28 @@ const masterLogin = async (req, res) => {
         .status(401)
         .json({ message: "Invalid credentials", success: false });
     }
+
+
+    // Get the login information
+    const lastLogin = new Date();
+    const lastIp = req.ip || ''; // Get the user's IP address
+    const lastDevice = req.get('user-agent') || ''; // Get the user's device details (browser info)
+    const lastLocation = ''; // You can integrate geolocation service if needed
+    const lastBrowser = req.get('user-agent') || ''; // Get the browser details from user-agent
+    const lastOs = ''; // You can use a library like `os` to get more detailed info if needed
+
+
+    // Update login history fields
+    await user.update({
+      login_history: {
+        last_login: lastLogin,
+        last_ip: lastIp,
+        last_device: lastDevice,
+        last_location: lastLocation,
+        last_browser: lastBrowser,
+        last_os: lastOs,
+      }
+    }, { returning: true });
 
     const token = await generateToken({
       userId: user.id,
@@ -235,7 +257,7 @@ const masterLogin = async (req, res) => {
         name: user.name,
         designation: "master",
         uuid: user.uuid,
-        userId:user.userId,
+        userId: user.userId,
       },
       success: true,
     });

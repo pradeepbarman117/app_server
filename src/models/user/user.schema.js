@@ -62,10 +62,10 @@ module.exports = (sequelize) => {
             },
             index: true,
         },
-        coin: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            defaultValue: 0,
+        balance:{
+            type:DataTypes.DECIMAL(10,2),
+            allowNull:false,
+            defaultValue:0
         },
         credit_ref:{
             type: DataTypes.INTEGER,
