@@ -9,10 +9,10 @@ const router = require('express').Router();
 
 
 
-router.post('/approve/request',
-  validateRequest(processSchema),
+router.post('/approval/request',
   passport.authenticate('jwt', { session: false }),
   authorizeRoles([roles.ADMIN]),
+  validateRequest(processSchema),
   async (req, res, next) => {
     try {
       await processController.masterRequest(req, res);

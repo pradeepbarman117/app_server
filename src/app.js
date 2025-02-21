@@ -29,6 +29,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Impliment Index Model
 const db = require('./models/index');
+
 // (async () => {
 //     try {
 //         await db.sequelize.sync();
