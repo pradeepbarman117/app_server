@@ -11,6 +11,38 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM("completed", "failed"),
       defaultValue: "completed",
     },
+    masterId: {
+      type: DataTypes.INTEGER, allowNull: true, references: {
+        model: 'masters',
+        key: 'id',
+      },
+      index:true,
+    },
+
+    adminId: {
+      type: DataTypes.INTEGER, allowNull: true, references: {
+        model: 'admins',
+        key: 'id',
+      },
+      index:true,
+    },
+
+    userId: {
+      type: DataTypes.INTEGER, allowNull: true, references: {
+        model: 'users',
+        key: 'id',
+      },
+      index:true,
+    },
+
+    requestId: {
+      type: DataTypes.INTEGER, allowNull: true, references: {
+        model: 'requests',
+        key: 'id',
+      },
+      index:true,
+    },
+    
     createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   });
 
