@@ -4,6 +4,7 @@ const {
   getAdmins,
   loginAdmin,
   updateAdminBalance,
+  getAuthAdmin
 } = require("@controllers/admin/admin.controllers");
 const validateRequest = require("../../middlewares/validateRequest");
 const adminSchema = require("../../validators/adminValidator");
@@ -21,6 +22,13 @@ router.get(
   authorizeRoles([roles.ADMIN]),
   getAdmins
 );
+
+router.get("/get/current/admin",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles([roles.ADMIN]),
+  getAuthAdmin
+);
+
 
 router.post("/auth/login", validateRequest(authSchema), loginAdmin);
 

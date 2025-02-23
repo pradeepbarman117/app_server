@@ -2,6 +2,7 @@ const db = require("@models/index");
 const { hashPassword, comparePassword } = require("../../helpers/bcrypt");
 const { where } = require("sequelize");
 const generateToken = require("../../helpers/generateToken");
+const { redisClient } = require("../../config/redis");
 
 const createAdmin = async (req, res) => {
   try {
@@ -71,9 +72,53 @@ const getAdmins = async (req, res) => {
   try {
     const admins = await db.admin.findAll({
       attributes: ["id", "name", "email"],
-      include: [{ model: db.master, as: "masters" }],
+      include: [
+        { 
+          model: db.master, 
+          as: "masters",
+          attributes: ["id", "userId", "adminId","balance","percent"],
+        }],
     });
     res.status(200).json(admins);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get Authenticated Admins
+const getAuthAdmin = async (req, res) => {
+  try {
+    const adminId = req.user.id;
+
+    const CACHE_KEY = `admin:${adminId}`
+    const CACHE_EXPIRY = 60
+
+    const cachedAdmin = await redisClient.get(CACHE_KEY);
+
+    if(cachedAdmin){
+      return res.status(200).send({
+        success: true,
+        data: JSON.parse(cachedAdmin),
+        source:'cached',
+      });
+    }
+
+    const admins = await db.admin.findOne({
+      where: { id: adminId },
+      attributes: ["id", "name", "email","balance"],
+    });
+
+    await redisClient.setEx(
+      CACHE_KEY,
+      CACHE_EXPIRY,
+      JSON.stringify(admins)
+    )
+
+    res.status(200).send({
+      success:true,
+      data: admins,
+      message: 'Retrived Admin Successfully'
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -113,4 +158,4 @@ const updateAdminBalance = async (req, res) => {
     }
 };
 
-module.exports = { createAdmin, getAdmins, loginAdmin, updateAdminBalance };
+module.exports = { createAdmin, getAdmins, loginAdmin, updateAdminBalance, getAuthAdmin };

@@ -107,5 +107,34 @@ db.master.hasMany(db.user, { foreignKey: 'masterId', as: 'masterUsers' });
 db.user.belongsTo(db.master, { foreignKey: 'masterId', as: 'master' });
 
 
+// Define associations between Resquest and Transactions => Master Admin and User 
+
+// // Request to Master
+db.request.belongsTo(db.master, {foreignKey:'masterId', as:'masterList'});
+db.master.hasMany(db.request, {foreignKey:'masterId', as:'requestList'});
+
+// // // Request to Admin
+// db.request.hasMany(db.admin, {foreignKey:'adminId', as:'adminList'});
+// db.admin.belongsTo(db.request, {foreignKey:'adminId', as:'requestList'});
+
+// // Request to User
+// db.request.hasMany(db.user, {foreignKey:'userId', as:'userList'});
+// db.user.belongsTo(db.request, {foreignKey:'userId', as:'requestList'});
+
+// // Request to Transaction
+db.request.hasMany(db.transaction, {foreignKey:'requestId', as:'transactionList'});
+db.transaction.belongsTo(db.request, {foreignKey:'requestId', as:'requestList'});
+
+// // Transaction to Admin
+// db.transaction.hasMany(db.admin, {foreignKey:'adminId', as:'adminList'});
+// db.admin.belongsTo(db.transaction, {foreignKey:'adminId', as:'transactionList'});
+// // Transaction to User
+// db.transaction.hasMany(db.user, {foreignKey:'userId', as:'userList'});
+// db.user.belongsTo(db.transaction, {foreignKey:'userId', as:'transactionList'});
+// // Transaction to Master
+// db.transaction.hasMany(db.master, {foreignKey:'masterId', as:'masterList'});
+// db.master.belongsTo(db.transaction, {foreignKey:'masterId', as:'transactionList'});
+
+
 
 module.exports = db;

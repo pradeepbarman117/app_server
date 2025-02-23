@@ -70,7 +70,7 @@ module.exports = (sequelize) => {
             defaultValue: false,
         },
         login_history:{
-            type: DataTypes.JSONB,
+            type: DataTypes.JSON,
             allowNull: true,
         },
         deletedAt:{

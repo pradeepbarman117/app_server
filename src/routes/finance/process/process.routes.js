@@ -9,13 +9,27 @@ const router = require('express').Router();
 
 
 
-router.post('/approval/request',
+router.post('/master/approval/request',
   passport.authenticate('jwt', { session: false }),
   authorizeRoles([roles.ADMIN]),
   validateRequest(processSchema),
   async (req, res, next) => {
     try {
       await processController.masterRequest(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
+router.post('/user/approval/request',
+  passport.authenticate('jwt', { session: false }),
+  authorizeRoles([roles.MASTER]),
+  validateRequest(processSchema),
+  async (req, res, next) => {
+    try {
+      await processController.userRequest(req, res);
     } catch (error) {
       next(error);
     }

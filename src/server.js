@@ -57,7 +57,6 @@ const server = http.createServer(app);
   try {
     // Connect Redis
     await connectRedis();
-
     // Initialize Socket.IO
     const io = await initSocket(server);
 
