@@ -3,7 +3,8 @@ const {
   getMasters,
   masterLogin,
   getMasterById,
-  updateMaster
+  updateMaster,
+  getAuthMaster
 } = require("@controllers/master/master.controllers");
 const validateRequest = require("../../middlewares/validateRequest");
 const passport = require("passport");
@@ -46,6 +47,13 @@ router.get(
   // Callback Function
   getMasterById
 );
+
+router.get('/auth/master/get',
+  passport.authenticate('jwt',{session:false}),
+  authorizeRoles(roles.MASTER),
+  // Callback Function
+  getAuthMaster
+)
 
 router.patch(
   "/master/update/:id",

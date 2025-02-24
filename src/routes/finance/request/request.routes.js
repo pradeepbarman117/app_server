@@ -69,7 +69,7 @@ router.get('/master/request/money/list/:id',
 
 
 // Get Master Request List By Id
-router.get('/master/request/money/list',
+router.get('/auth/master/request/money/list',
   passport.authenticate('jwt',{session:false}),
   authorizeRoles([roles.MASTER]),
   async (req, res, next) => {

@@ -1,11 +1,6 @@
+
+
 const { getSocketInstance } = require('../../../../socket');
-const redis = require('redis');
-
-const redisClient = redis.createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-redisClient.connect().catch(console.error);
 
 const setupMasterRequestSocket = () => {
     const io = getSocketInstance();
@@ -13,43 +8,41 @@ const setupMasterRequestSocket = () => {
     io.on("connection", (socket) => {
         console.log(`Client connected: ${socket.id}`);
 
+        // Clients register their userId (masterId or adminId) when connecting
+        socket.on("register", (userId) => {
+            if (!userId) return; // Guard against invalid userId
+            socket.join(`master:${userId}`); // Join a room like "user:123"
+        });
+
         socket.on("hello", () => {
             socket.emit("message", "Hello from the server!");
         });
 
         socket.on("disconnect", () => {
             console.log(`Client disconnected: ${socket.id}`);
+            // No explicit cleanup needed; Socket.IO handles leaving rooms
         });
     });
 };
 
 const emitMasterRequestAdded = async (request) => {
     const io = getSocketInstance();
-    console.log(request,'request');
-    // Broadcast to all clients
-    io.emit("masterRequestAdded", request);
-
-    // Store in Redis for persistence
-    // await redisClient.hSet('masters:request', request.id.toString(), JSON.stringify(request));
+    // Emit only to the requesting master and the admin
+    const masterId = `master:${request.dataValues.masterList.dataValues.userId}`;
+    io.to(masterId).emit("masterRequestAdded", request);
+    io.emit("adminMasterRequestAdded", request);
 };
 
-const emitMasterRequestUpdated = async (request) => {
+const emitMasterRequestUpdated = async (master,request) => {
     const io = getSocketInstance();
-
-    // Broadcast to all clients
-    io.emit("masterRequestUpdated", request);
-
-    // Update in Redis
-    // await redisClient.hSet('masters:request', master.id.toString(), JSON.stringify(master));
-};
-
-const getMasterRequestFromRedis = async (masterId) => {
-    return JSON.parse(await redisClient.hGet('masters:request', masterId.toString()));
+    const masterId = `master:${master}`;
+    
+    io.to(masterId).emit("masterRequestUpdated", request);
+    io.emit("adminMasterRequestUpdated", request);
 };
 
 module.exports = {
     setupMasterRequestSocket,
     emitMasterRequestAdded,
     emitMasterRequestUpdated,
-    getMasterRequestFromRedis
 };

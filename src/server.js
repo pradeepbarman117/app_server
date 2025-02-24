@@ -49,6 +49,8 @@ const { initSocket } = require('./socket');
 const { app } = require('./app');
 const { connectRedis } = require('./config/redis');
 const { setupMasterSocket } = require('./services/socket/master/masterSocket');
+const { setupMasterRequestSocket } = require('./services/socket/finance/request/masterRequestSocket');
+const { setupAdminSocket } = require('./services/socket/admin/adminSocket');
 
 const server = http.createServer(app);
 
@@ -59,9 +61,17 @@ const server = http.createServer(app);
     await connectRedis();
     // Initialize Socket.IO
     const io = await initSocket(server);
-
-    // Setup socket listeners
+    
+    // ------------------------ Master  ---------------------------------
+    // This is for master socket adding new master updating new master
     setupMasterSocket();
+
+    // ------------------------ Master Request Balance ---------------------------------
+    setupMasterRequestSocket();
+
+    // ------------------------ AdminBalance ---------------------------------
+    
+    setupAdminSocket();
 
     server.listen((process.env.PORT || 8080), () => {
       console.log('Server is running', server.address().port);
