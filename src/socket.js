@@ -50,9 +50,12 @@ const initSocket = async (server) => {
   }
 };
 
+
+
 const getSocketInstance = () => {
   if (!io) throw new Error('Socket.IO not initialized');
   return io;
 };
+
 
 module.exports = { initSocket, getSocketInstance };

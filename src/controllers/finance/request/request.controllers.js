@@ -59,6 +59,7 @@ const requestController = {
             });
 
             await redisClient.del('master:request:list');
+            // await redisClient.del(`auth:master:request:list:${master.id}`);
             emitMasterRequestAdded(requestListWithMaster);
 
             await t.commit();

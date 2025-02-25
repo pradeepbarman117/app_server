@@ -196,6 +196,44 @@ const getMasterById = async (req, res) => {
   }
 };
 
+const getAuthMaster = async (req, res) => {
+  try {
+    const masterId = req.user.id;
+
+    const CACHE_KEY = `master:${masterId}`
+    const CACHE_EXPIRY = 60
+
+    const cachedMaster = await redisClient.get(CACHE_KEY);
+
+    if(cachedMaster){
+      return res.status(200).send({
+        success: true,
+        data: JSON.parse(cachedMaster),
+        source:'cached',
+      });
+    }
+
+    const master = await db.master.findOne({
+      where: { id: masterId },
+      attributes: ["id", "userId", "balance"],
+    });
+
+    await redisClient.setEx(
+      CACHE_KEY,
+      CACHE_EXPIRY,
+      JSON.stringify(master)
+    )
+
+    res.status(200).send({
+      success:true,
+      data: master,
+      message: 'Retrived Master Successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 const masterLogin = async (req, res) => {
   try {
     const { userId, password, passcode } = req.body;
@@ -266,4 +304,4 @@ const masterLogin = async (req, res) => {
   }
 };
 
-module.exports = { createMaster, getMasters, masterLogin, getMasterById, updateMaster };
+module.exports = { createMaster, getMasters, masterLogin, getMasterById, updateMaster, getAuthMaster };

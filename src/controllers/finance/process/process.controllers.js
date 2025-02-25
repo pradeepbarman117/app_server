@@ -88,18 +88,23 @@ const processController = {
         );
       }
 
-      const adminBalance = await db.admin.findOne({
-        attributes:["balance"],
-        where:{ id: admin.id, },
-        transaction: t
-      });
+      // const adminBalance = await db.admin.findOne({
+      //   attributes:["balance"],
+      //   where:{ id: admin.id, },
+      //   transaction: t
+      // });
+
+      const adminUpdatedBalance = admin.balance - request.amount
 
       const updatedRequest = await request.update({ status }, { transaction: t });
       await t.commit();
 
+      
       await redisClient.del('master:request:list');
-      emitMasterRequestUpdated(updatedRequest);
-      emitAdminBalanceUpdate(adminBalance);
+      await redisClient.del(`auth:master:request:list:${master.userId}`);
+      await redisClient.del(`admin:${admin.id}`);
+      emitMasterRequestUpdated(master.userId,updatedRequest);
+      emitAdminBalanceUpdate(admin.id,adminUpdatedBalance);
 
       return res.status(200).send({
         success: true,
