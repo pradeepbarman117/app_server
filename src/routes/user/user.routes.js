@@ -34,7 +34,7 @@ router.post(
 router.get(
   "/user/get",
   passport.authenticate("jwt", { session: false, failWithError: true }),
-  authorizeRoles([roles.MASTER, roles.ADMIN]),
+  authorizeRoles([roles.ADMIN]),
   async (req, res, next) => {
     try {
       await getUser(req, res);

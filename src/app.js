@@ -46,8 +46,8 @@ const oddsRoutes = require('./routes/odds.routes');
 const financeRoute = require('./routes/finance.routes');
 
 app.use('/api', indexRoutes);
-app.use('/api/odds', oddsRoutes);
 app.use('/api/finance', financeRoute);
+app.use('/api/odds/sports', oddsRoutes);
 
 
 

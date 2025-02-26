@@ -11,7 +11,7 @@ const setupMasterRequestSocket = () => {
         // Clients register their userId (masterId or adminId) when connecting
         socket.on("register", (userId) => {
             if (!userId) return; // Guard against invalid userId
-            socket.join(`master:${userId}`); // Join a room like "user:123"
+            socket.join(`masterReq:${userId}`); // Join a room like "user:123"
         });
 
         socket.on("hello", () => {
@@ -28,14 +28,14 @@ const setupMasterRequestSocket = () => {
 const emitMasterRequestAdded = async (request) => {
     const io = getSocketInstance();
     // Emit only to the requesting master and the admin
-    const masterId = `master:${request.dataValues.masterList.dataValues.userId}`;
+    const masterId = `masterReq:${request.dataValues.masterList.dataValues.userId}`;
     io.to(masterId).emit("masterRequestAdded", request);
     io.emit("adminMasterRequestAdded", request);
 };
 
 const emitMasterRequestUpdated = async (master,request) => {
     const io = getSocketInstance();
-    const masterId = `master:${master}`;
+    const masterId = `masterReq:${master}`;
     
     io.to(masterId).emit("masterRequestUpdated", request);
     io.emit("adminMasterRequestUpdated", request);
