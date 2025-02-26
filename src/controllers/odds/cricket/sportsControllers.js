@@ -2,12 +2,11 @@ const { redisClient } = require('../../../config/redis');
 const { getAllSports } = require('../../../services/odds/allSports/sportServices');
 
 
-
 const sportControllers = async (req, res) => {
     try {
 
         const CACHE_KEY = 'sports:list';
-        const CACHE_EXPIRY = 60
+        const CACHE_EXPIRY = 60 * 60 * 24 * 1
 
 
         const cachedSports = await redisClient.get(CACHE_KEY);
