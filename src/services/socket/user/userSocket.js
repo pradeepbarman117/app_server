@@ -1,60 +1,56 @@
-
+const { redisClient } = require("../../../config/redis");
 const { getSocketInstance } = require("../../../socket");
-const redis = require('redis');
-
-
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-
-redisClient.connect().catch(console.error);
 
 const setupUserSocket = () => {
   const io = getSocketInstance();
-  
+
   io.on("connection", (socket) => {
-    console.log(`Client connected: ${socket.id}`);
+
+    socket.on("register", (userId) => {
+      if (!userId) return; // Guard against invalid userId
+      socket.join(`userCreated:${userId}`); // Join a room like "user:123"
+      console.log(userId,'userId......')
+    });
 
     socket.on("hello", () => {
       socket.emit("message", "Hello from the server!");
     });
 
     socket.on("disconnect", () => {
-      console.log(`Client disconnected: ${socket.id}`);
+
+      // No explicit cleanup needed; Socket.IO handles leaving rooms
     });
   });
 };
 
-
-const emitUserAdded = async (master) => {
+const emitUserAdded = async (master_Id,master) => {
   const io = getSocketInstance();
-  
-  // Broadcast to all clients
-  io.emit("userAdded", master);
-  
-  // Store in Redis for persistence
-  await redisClient.hSet('users', master.id.toString(), JSON.stringify(master));
-};
+  const masterId = `userCreated:${master_Id}`;
 
+  // Broadcast to requested clients
+  io.to(masterId).emit("userAdded", master);
+
+  // Store in Redis for persistence
+  await redisClient.hSet("users", master.id.toString(), JSON.stringify(master));
+};
 
 const emitUserUpdated = async (master) => {
   const io = getSocketInstance();
-  
+
   // Broadcast to all clients
   io.emit("userUpdated", master);
-  
+
   // Update in Redis
-  await redisClient.hSet('users', master.id.toString(), JSON.stringify(master));
+  await redisClient.hSet("users", master.id.toString(), JSON.stringify(master));
 };
 
 const getUserFromRedis = async (userId) => {
-  return JSON.parse(await redisClient.hGet('users', userId.toString()));
+  return JSON.parse(await redisClient.hGet("users", userId.toString()));
 };
 
 module.exports = {
-    setupUserSocket,
-    emitUserAdded,
-    emitUserUpdated,
-    getUserFromRedis
-  };
+  setupUserSocket,
+  emitUserAdded,
+  emitUserUpdated,
+  getUserFromRedis,
+};

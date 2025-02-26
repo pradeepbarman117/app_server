@@ -51,6 +51,7 @@ const { connectRedis } = require('./config/redis');
 const { setupMasterSocket } = require('./services/socket/master/masterSocket');
 const { setupMasterRequestSocket } = require('./services/socket/finance/request/masterRequestSocket');
 const { setupAdminSocket } = require('./services/socket/admin/adminSocket');
+const { setupUserSocket } = require('./services/socket/user/userSocket');
 
 const server = http.createServer(app);
 
@@ -72,6 +73,12 @@ const server = http.createServer(app);
     // ------------------------ AdminBalance ---------------------------------
     
     setupAdminSocket();
+
+
+    // ------------------------ User ---------------------------------
+
+    setupUserSocket();
+
 
     server.listen((process.env.PORT || 8080), () => {
       console.log('Server is running', server.address().port);

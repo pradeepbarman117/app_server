@@ -70,14 +70,14 @@ const createUser = async (req, res) => {
     const userWithMaster = await db.user.findOne({
       where: { id: user.id },
       include: [
-        { model: db.master, as: "master", attributes: ["id", "name", "uuid"] },
+        { model: db.master, as: "master", attributes: ["id", "name", "uuid","userId"] },
       ],
       attributes: {
         exclude: ["name", "email", "password", "passcode", "designation", "deletedAt"]
       },
     });
 
-    emitUserAdded(userWithMaster);
+    emitUserAdded(userWithMaster.master?.userId,userWithMaster);
 
     res.status(201).send({
       message: "User created successfully",
@@ -95,7 +95,7 @@ const getUser = async (req, res) => {
 
 
     const CACHE_KEY = 'users:list';
-    const CACHE_EXPIRY = 300;
+    const CACHE_EXPIRY = 30;
 
     // Check Redis cache
     const cachedUsers = await redisClient.get(CACHE_KEY);
@@ -109,7 +109,7 @@ const getUser = async (req, res) => {
 
     // If no cache, fetch from database
     const users = await db.user.findAll({
-      attributes: ["id", "uuid", "coin", "status", "createdAt"],
+      attributes: ["id", "uuid", "balance", "status", "createdAt","userId"],
       include: [
         {
           model: db.admin,
@@ -132,7 +132,7 @@ const getUser = async (req, res) => {
 
     return res.status(200).send({
       message: "Users retrieved successfully",
-      users,
+      data:users,
       source: 'database'
     });
   } catch (err) {
@@ -150,7 +150,7 @@ const getMasterUser = async (req, res) => {
     }
 
     const CACHE_KEY = `master:user:${id}`;
-    const CACHE_EXPIRY = 300;
+    const CACHE_EXPIRY = 30;
 
     const cachedUsers = await redisClient.get(CACHE_KEY);
     if (cachedUsers) {
@@ -163,7 +163,7 @@ const getMasterUser = async (req, res) => {
     // If no cache, fetch from database
     const users = await db.user.findAll({
       where: { masterId: id },
-      attributes: ["id", "uuid", "coin", "status", "createdAt", "userId"],
+      attributes: ["id", "uuid", "balance", "status", "createdAt", "userId"],
       include: [
         {
           model: db.master,
@@ -199,7 +199,7 @@ const getAllMasterUser = async (req, res) => {
     }
 
     const CACHE_KEY = `master:allUser:${id}`;
-    const CACHE_EXPIRY = 300;
+    const CACHE_EXPIRY = 30;
 
     const cachedUsers = await redisClient.get(CACHE_KEY);
     if (cachedUsers) {
