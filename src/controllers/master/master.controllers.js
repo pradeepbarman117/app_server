@@ -200,7 +200,7 @@ const getAuthMaster = async (req, res) => {
   try {
     const masterId = req.user.id;
 
-    const CACHE_KEY = `master:${masterId}`
+    const CACHE_KEY = `get:auth:master:${masterId}`
     const CACHE_EXPIRY = 60
 
     const cachedMaster = await redisClient.get(CACHE_KEY);

@@ -29,6 +29,7 @@ const emitUserAdded = async (master_Id,master) => {
 
   // Broadcast to requested clients
   io.to(masterId).emit("userAdded", master);
+  io.emit('notify:admin:user:added',master);
 
   // Store in Redis for persistence
   await redisClient.hSet("users", master.id.toString(), JSON.stringify(master));
@@ -39,6 +40,7 @@ const emitUserUpdated = async (master) => {
 
   // Broadcast to all clients
   io.emit("userUpdated", master);
+  io.emit('notify:admin:user:updated');
 
   // Update in Redis
   await redisClient.hSet("users", master.id.toString(), JSON.stringify(master));
