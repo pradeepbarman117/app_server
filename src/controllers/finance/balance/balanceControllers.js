@@ -1,10 +1,12 @@
-const db = require("@models/accounts/request/");
+const db = require("@models/index");
+const { redisClient } = require("../../../config/redis");
+const { Op } = require("sequelize");
 
 const balanceControllers = {
-  getMasterRequest: async (req, res) => {
+  getTotalAmount: async (req, res) => {
     try {
       const CACHE_KEY = "balance:request:total";
-      const CACHE_EXPIRY = 10;
+      const CACHE_EXPIRY = 300;
 
       const cachedTotalREQ = await redisClient.get(CACHE_KEY);
 
@@ -17,7 +19,11 @@ const balanceControllers = {
       }
 
       const totalAmount = await db.request.findAll({
-        attributes: ["amount"],
+        attributes: ["amount","status"],
+        where: {
+          masterId: { [Op.ne]: null },
+          adminId: { [Op.ne]: null }
+        },
       });
 
       await redisClient.setEx(
@@ -28,7 +34,7 @@ const balanceControllers = {
 
       res.status(200).send({
         success: true,
-        data: requestList,
+        data: totalAmount,
       });
     } catch (err) {
       return res.status(500).send({ success: false, message: err.message });

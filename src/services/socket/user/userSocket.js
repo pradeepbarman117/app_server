@@ -8,8 +8,7 @@ const setupUserSocket = () => {
 
     socket.on("register", (userId) => {
       if (!userId) return; // Guard against invalid userId
-      socket.join(`userCreated:${userId}`); // Join a room like "user:123"
-      console.log(userId,'userId......')
+      socket.join(`user:created:${userId}`); // Join a room like "user:123"
     });
 
     socket.on("hello", () => {
@@ -25,7 +24,7 @@ const setupUserSocket = () => {
 
 const emitUserAdded = async (master_Id,master) => {
   const io = getSocketInstance();
-  const masterId = `userCreated:${master_Id}`;
+  const masterId = `user:created:${master_Id}`;
 
   // Broadcast to requested clients
   io.to(masterId).emit("userAdded", master);
