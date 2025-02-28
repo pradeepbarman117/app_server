@@ -31,6 +31,7 @@ const emitMasterRequestAdded = async (request) => {
     const masterId = `masterReq:${request.dataValues.masterList.dataValues.userId}`;
     io.to(masterId).emit("masterRequestAdded", request);
     io.emit("adminMasterRequestAdded", request);
+    io.emit("notify:admin:amount:changed",request);
 };
 
 const emitMasterRequestUpdated = async (master,request) => {
@@ -39,6 +40,7 @@ const emitMasterRequestUpdated = async (master,request) => {
     
     io.to(masterId).emit("masterRequestUpdated", request);
     io.emit("adminMasterRequestUpdated", request);
+    io.emit("notify:admin:amount:updated",request);
 };
 
 module.exports = {

@@ -29,7 +29,6 @@ router.get("/get/current/admin",
   getAuthAdmin
 );
 
-
 router.post("/auth/login", validateRequest(authSchema), loginAdmin);
 
 router.patch(
@@ -38,5 +37,6 @@ router.patch(
   validateRequest(adminFinanceSchema),
   updateAdminBalance
 );
+
 
 module.exports = router; // Export the router to use in other files.
