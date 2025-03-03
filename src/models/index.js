@@ -137,4 +137,22 @@ db.transaction.belongsTo(db.request, {foreignKey:'requestId', as:'requestList'})
 
 
 
+// Define relationships
+db.match.hasOne(db.odds, { foreignKey: 'matchId', onDelete: 'CASCADE' });
+db.odds.belongsTo(db.match, { foreignKey: 'matchId' });
+
+db.match.hasMany(db.bet, { foreignKey: 'matchId', onDelete: 'CASCADE' });
+db.bet.belongsTo(db.match, { foreignKey: 'matchId' });
+
+db.odds.hasMany(db.bet, { foreignKey: 'oddsId', onDelete: 'CASCADE' });
+db.bet.belongsTo(db.odds, { foreignKey: 'oddsId' });
+
+db.user.hasMany(db.bet, { foreignKey: 'userId', onDelete: 'CASCADE' });
+db.bet.belongsTo(db.user, { foreignKey: 'userId' });
+
+
+
+
+
+
 module.exports = db;
