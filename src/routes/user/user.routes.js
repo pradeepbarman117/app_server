@@ -5,7 +5,8 @@ const {
   getMasterUser,
   getAdminUser,
   getAllMasterUser,
-  loginUser
+  loginUser,
+  getTotalUser
 } = require("@controllers/user/user.controllers");
 const { authorizeRoles } = require("../../config/passport");
 const roles = require("../../config/roles");
@@ -43,6 +44,21 @@ router.get(
     }
   }
 );
+
+
+router.get(
+  "/user/get/total",
+  passport.authenticate("jwt", { session: false, failWithError: true }),
+  authorizeRoles([roles.ADMIN]),
+  async (req, res, next) => {
+    try {
+      await getTotalUser(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 
 router.get(
   "/master/user/all",
