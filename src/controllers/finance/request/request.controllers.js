@@ -123,14 +123,28 @@ const requestController = {
       return res.status(500).send({ success: false, message: error.message });
     }
   },
-  // Getting Master Request Details with Pagination
   getMasterRequest: async (req, res) => {
     try {
       const page = parseInt(req.query.page) || 1; // Default to page 1
       const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
       const offset = (page - 1) * limit;
 
-      const CACHE_KEY = `master:request:list:page:${page}:limit:${limit}`;
+      // Extract requestId from query for search
+      const { requestId } = req.query;
+
+      // Build where clause
+      const whereClause = {
+        masterId: { [Op.ne]: null },
+        adminId: { [Op.ne]: null },
+      };
+
+      if (requestId) {
+        whereClause.requestId = { [Op.like]: `%${requestId}%` }; // Partial match for requestId
+      }
+
+      const CACHE_KEY = `master:request:list:page:${page}:limit:${limit}:requestId:${
+        requestId || "all"
+      }`;
       const CACHE_EXPIRY = 30;
 
       const cachedMasterREQ = await redisClient.get(CACHE_KEY);
@@ -138,10 +152,10 @@ const requestController = {
       if (cachedMasterREQ) {
         const cachedData = JSON.parse(cachedMasterREQ);
         const flattenedData = cachedData.data ? cachedData.data : cachedData;
-        
+
         return res.status(200).send({
           success: true,
-          data: flattenedData, // Ensuring data is in correct format
+          data: flattenedData,
           pagination: cachedData.pagination,
           source: "cached",
         });
@@ -149,18 +163,12 @@ const requestController = {
 
       // Get total count for pagination
       const totalItems = await db.request.count({
-        where: {
-          masterId: { [Op.ne]: null },
-          adminId: { [Op.ne]: null },
-        },
+        where: whereClause,
       });
 
       const requestList = await db.request.findAll({
         attributes: ["id", "requestId", "status", "amount", "createdAt"],
-        where: {
-          masterId: { [Op.ne]: null },
-          adminId: { [Op.ne]: null },
-        },
+        where: whereClause,
         include: [
           {
             model: db.master,
@@ -170,7 +178,7 @@ const requestController = {
         ],
         limit: limit,
         offset: offset,
-        order: [["createdAt", "DESC"]], // Optional: sort by creation date
+        order: [["createdAt", "DESC"]], // Sort by creation date
       });
 
       const totalPages = Math.ceil(totalItems / limit);
