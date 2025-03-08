@@ -98,57 +98,6 @@ const createUser = async (req, res) => {
   }
 };
 
-// const getUser = async (req, res) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1; // Default to page 1
-//     const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
-//     const offset = (page - 1) * limit;
-
-//     // Extract requestId from query for search
-//     const { requestId } = req.query;
-
-//     const CACHE_KEY = "users:list";
-//     const CACHE_EXPIRY = 30;
-
-//     // Check Redis cache
-//     const cachedUsers = await redisClient.get(CACHE_KEY);
-
-//     if (cachedUsers) {
-//       return res.json({
-//         data: JSON.parse(cachedUsers),
-//         source: "cache",
-//       });
-//     }
-
-//     // If no cache, fetch from database
-//     const users = await db.user.findAll({
-//       attributes: ["id", "uuid", "balance", "status", "createdAt", "userId"],
-//       include: [
-//         {
-//           model: db.admin,
-//           as: "admin",
-//           attributes: ["id", "uuid", "name"],
-//         },
-//         {
-//           model: db.master,
-//           as: "master",
-//           attributes: ["id", "uuid", "name"],
-//         },
-//       ],
-//     });
-
-//     await redisClient.setEx(CACHE_KEY, CACHE_EXPIRY, JSON.stringify(users));
-
-//     return res.status(200).send({
-//       message: "Users retrieved successfully",
-//       data: users,
-//       source: "database",
-//     });
-//   } catch (err) {
-//     return res.status(500).send({ message: err.message });
-//   }
-// };
-
 const getUser = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Default to page 1
@@ -397,6 +346,46 @@ const getTotalUser = async (req, res) => {
   }
 };
 
+
+// Get Auth User
+const getAuthUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const CACHE_KEY = `user:${userId}`
+    const CACHE_EXPIRY = 60
+
+    const cachedUser = await redisClient.get(CACHE_KEY);
+
+    if(cachedUser){
+      return res.status(200).send({
+        success: true,
+        data: JSON.parse(cachedUser),
+        source:'cached',
+      });
+    }
+
+    const user = await db.user.findOne({
+      where: { id: userId },
+      attributes: ["id","balance"],
+    });
+
+    await redisClient.setEx(
+      CACHE_KEY,
+      CACHE_EXPIRY,
+      JSON.stringify(user)
+    )
+
+    res.status(200).send({
+      success:true,
+      data: user,
+      message: 'Retrived User Successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getUser,
   createUser,
@@ -405,4 +394,5 @@ module.exports = {
   getAllMasterUser,
   loginUser,
   getTotalUser,
+  getAuthUser
 };
