@@ -12,6 +12,16 @@ router.post('/place-bet',
     authorizeRoles([roles.USER]), 
     betController.placeBet
 );
-router.get('/user/:userId', betController.getUserBets);
+router.get('/user/bets', 
+    passport.authenticate('jwt',{session:false}),
+    authorizeRoles([roles.USER]),
+    async(req,res,next)=>{
+        try{
+            await betController.getUserBets(req,res);
+        }catch(err){
+            next(err)
+        }
+    }
+);
 
 module.exports = router

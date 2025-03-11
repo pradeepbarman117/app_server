@@ -5,6 +5,7 @@ const {
   emitMasterRequestAdded,
 } = require("../../../services/socket/finance/request/masterRequestSocket");
 const { redisClient } = require("../../../config/redis");
+const { emitUserRequestAdded } = require("../../../services/socket/finance/request/userRequestSocket");
 
 const requestController = {
   // Master Requesting Balance to Admin
@@ -65,7 +66,10 @@ const requestController = {
 
       await redisClient.del("master:request:list");
       await redisClient.del("balance:request:total");
-      // await redisClient.del(`auth:master:request:list:${master.id}`);
+      await redisClient.del(`balance:request:master:${masterId}`);
+      await redisClient.del(`auth:master:request:list:${masterId}`);
+      await redisClient.del(`auth:master:request:list:${masterId}:page:${1}:limit:${20}`);
+
       emitMasterRequestAdded(requestListWithMaster);
 
       await t.commit();
@@ -101,7 +105,7 @@ const requestController = {
       const masterId = user.master?.id;
       const UUID = uuidv4();
 
-      await db.request.create(
+      const request = await db.request.create(
         {
           requesterId: userId,
           receiverId: masterId,
@@ -114,15 +118,42 @@ const requestController = {
         { transaction: t }
       );
 
+      const requestListWithUser = await db.request.findOne({
+        attributes: ["id", "requestId", "status", "amount", "createdAt"],
+        where: {
+          id: request.id,
+          userId: { [Op.ne]: null },
+          masterId: { [Op.ne]: null },
+        },
+        include: [
+          {
+            model: db.user,
+            as: "userList",
+            attributes: ["id", "userId", "balance"],
+          },
+          {
+            model: db.master,
+            as: "masterList",
+            attributes: ["id", "userId", "balance"],
+          },
+        ],
+        transaction: t,
+      });
+
+
+      await redisClient.del(`auth:user:request:list:${userId}`);
+      await redisClient.del(`master:user:request:list:${requestListWithUser.masterList.id}`);
+
+      emitUserRequestAdded(requestListWithUser, userId);
+
       await t.commit();
-      return res
-        .status(200)
-        .send({ success: true, message: "Request sent to master" });
+      return res.status(200).send({ success: true, message: "Request sent to master" });
     } catch (error) {
       await t.rollback();
       return res.status(500).send({ success: false, message: error.message });
     }
   },
+  // Master controllers Only 
   getMasterRequest: async (req, res) => {
     try {
       const page = parseInt(req.query.page) || 1; // Default to page 1
@@ -142,9 +173,8 @@ const requestController = {
         whereClause.requestId = { [Op.like]: `%${requestId}%` }; // Partial match for requestId
       }
 
-      const CACHE_KEY = `master:request:list:page:${page}:limit:${limit}:requestId:${
-        requestId || "all"
-      }`;
+      const CACHE_KEY = `master:request:list:page:${page}:limit:${limit}:requestId:${requestId || "all"
+        }`;
       const CACHE_EXPIRY = 30;
 
       const cachedMasterREQ = await redisClient.get(CACHE_KEY);
@@ -216,6 +246,7 @@ const requestController = {
       });
     }
   },
+  // M
   getMasterREQById: async (req, res) => {
     try {
       const { id } = req.params;
@@ -261,28 +292,52 @@ const requestController = {
       return res.status(500).send({ success: false, message: err.message });
     }
   },
+  // Master will get the their request (Only Master);
   getAuthMasterREQ: async (req, res) => {
     try {
       const masterId = req.user?.id;
+      const page = parseInt(req.query.page) || 1; // Default to page 1
+      const limit = parseInt(req.query.limit) || 20; // Default to 20 items per page
+      const offset = (page - 1) * limit;
 
-      const CACHE_KEY = `auth:master:request:list:${masterId}`;
+      // Extract requestId from query for search
+      const { requestId } = req.query;
+
+      // Build where clause
+      const whereClause = {
+        masterId,
+        adminId: { [Op.ne]: null },
+      };
+
+      if (requestId) {
+        whereClause.requestId = { [Op.like]: `%${requestId}%` }; // Partial match for requestId
+      }
+
+      const CACHE_KEY = `auth:master:request:list:${masterId}:page:${page}:limit:${limit}:requestId:${requestId || "all"}`;
       const CACHE_EXPIRY = 30;
 
       const cachedMasterREQ = await redisClient.get(CACHE_KEY);
 
       if (cachedMasterREQ) {
+        const cachedData = JSON.parse(cachedMasterREQ);
+        const flattenedData = cachedData.data ? cachedData.data : cachedData;
+
         return res.status(200).send({
           success: true,
-          data: JSON.parse(cachedMasterREQ),
+          data: flattenedData,
+          pagination: cachedData.pagination,
           source: "cached",
         });
       }
 
+      // Get total count for pagination
+      const totalItems = await db.request.count({
+        where: whereClause,
+      });
+
+      // Fetch requests with pagination
       const requestList = await db.request.findAll({
-        where: {
-          masterId,
-          adminId: { [Op.ne]: null },
-        },
+        where: whereClause,
         include: [
           {
             model: db.master, // Admin details
@@ -290,23 +345,287 @@ const requestController = {
             attributes: ["id", "userId", "balance"],
           },
         ],
+        limit: limit,
+        offset: offset,
+        order: [["createdAt", "DESC"]], // Sort by creation date
       });
 
+      const totalPages = Math.ceil(totalItems / limit);
+
+      // Prepare response data with pagination
+      let requestListForRedis = {
+        data: requestList,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: totalItems,
+          itemsPerPage: limit,
+        },
+      };
+
+      // Store in cache
       await redisClient.setEx(
         CACHE_KEY,
         CACHE_EXPIRY,
-        JSON.stringify(requestList)
+        JSON.stringify(requestListForRedis)
       );
 
       return res.status(200).send({
         success: true,
         data: requestList,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: totalItems,
+          itemsPerPage: limit,
+        },
       });
     } catch (err) {
       return res.status(500).send({ success: false, message: err.message });
     }
   },
   // Getting User Request Details
+  // getAuthUserRequest: async (req, res) => {
+  //   try {
+  //     const userId = req.user?.id;
+  //     const CACHE_KEY = `auth:user:request:list:${userId}`;
+  //     const CACHE_EXPIRY = 30;
+
+  //     // Check if data exists in cache
+  //     const cachedUserREQ = await redisClient.get(CACHE_KEY);
+
+  //     if (cachedUserREQ) {
+  //       return res.status(200).send({
+  //         success: true,
+  //         data: JSON.parse(cachedUserREQ),
+  //         source: "cached",
+  //       });
+  //     }
+
+  //     // Fetch requests where the user is the requester
+  //     const requestList = await db.request.findAll({
+  //       where: {
+  //         requesterId: userId,
+  //         userId: userId,
+  //         masterId: { [Op.ne]: null }, // Ensure it's a user-to-master request
+  //       },
+  //       attributes: ["id", "requestId", "status", "amount", "createdAt"],
+  //       include: [
+  //         {
+  //           model: db.master,
+  //           as: "masterList",
+  //           attributes: ["id", "userId", "balance"],
+  //         },
+  //       ],
+  //       order: [["createdAt", "DESC"]], // Sort by creation date
+  //     });
+
+
+  //     // Store in cache
+  //     await redisClient.setEx(
+  //       CACHE_KEY,
+  //       CACHE_EXPIRY,
+  //       JSON.stringify(requestList)
+  //     );
+
+
+  //     return res.status(200).send({
+  //       success: true,
+  //       data: requestList,
+  //     });
+
+  //   } catch (err) {
+  //     return res.status(500).send({ success: false, message: err.message });
+  //   }
+  // },
+  getAuthUserRequest: async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const page = parseInt(req.query.page) || 1; // Default to page 1
+      const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+      const offset = (page - 1) * limit;
+  
+      // Extract requestId from query for search
+      const { requestId } = req.query;
+  
+      // Build where clause
+      const whereClause = {
+        requesterId: userId,
+        userId: userId,
+        masterId: { [Op.ne]: null }, // Ensure it's a user-to-master request
+      };
+  
+      if (requestId) {
+        whereClause.requestId = { [Op.like]: `%${requestId}%` }; // Partial match for requestId
+      }
+  
+      const CACHE_KEY = `auth:user:request:list:${userId}:page:${page}:limit:${limit}:requestId:${requestId || "all"}`;
+      const CACHE_EXPIRY = 30;
+  
+      // Check if data exists in cache
+      const cachedUserREQ = await redisClient.get(CACHE_KEY);
+  
+      if (cachedUserREQ) {
+        const cachedData = JSON.parse(cachedUserREQ);
+        const flattenedData = cachedData.data ? cachedData.data : cachedData;
+  
+        return res.status(200).send({
+          success: true,
+          data: flattenedData,
+          pagination: cachedData.pagination,
+          source: "cached",
+        });
+      }
+  
+      // Get total count for pagination
+      const totalItems = await db.request.count({
+        where: whereClause,
+      });
+  
+      // Fetch requests where the user is the requester
+      const requestList = await db.request.findAll({
+        where: whereClause,
+        attributes: ["id", "requestId", "status", "amount", "createdAt"],
+        include: [
+          {
+            model: db.master,
+            as: "masterList",
+            attributes: ["id", "userId"],
+          },
+        ],
+        limit: limit,
+        offset: offset,
+        order: [["createdAt", "DESC"]], // Sort by creation date
+      });
+  
+      const totalPages = Math.ceil(totalItems / limit);
+  
+      // Prepare data for Redis caching
+      const requestListForRedis = {
+        data: requestList,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: totalItems,
+          itemsPerPage: limit,
+        },
+      };
+  
+      // Store in cache
+      await redisClient.setEx(
+        CACHE_KEY,
+        CACHE_EXPIRY,
+        JSON.stringify(requestListForRedis)
+      );
+  
+      return res.status(200).send({
+        success: true,
+        data: requestList,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: totalItems,
+          itemsPerPage: limit,
+        },
+      });
+    } catch (err) {
+      return res.status(500).send({ success: false, message: err.message });
+    }
+  },
+  // Get Master's User Request List
+  getAllUserRequest: async (req, res) => {
+    try {
+      const masterId = req.user?.id;
+      const page = parseInt(req.query.page) || 1; // Default to page 1
+      const limit = parseInt(req.query.limit) || 10; // Default to 20 items per page
+      const offset = (page - 1) * limit;
+  
+      // Extract requestId from query for search
+      const { requestId } = req.query;
+  
+      // Build where clause
+      const whereClause = {
+        masterId,
+        userId: { [Op.ne]: null }, // Ensure it's a user-to-master request
+      };
+  
+      if (requestId) {
+        whereClause.requestId = { [Op.like]: `%${requestId}%` }; // Partial match for requestId
+      }
+  
+      const CACHE_KEY = `master:user:request:list:${masterId}:page:${page}:limit:${limit}:requestId:${requestId || "all"}`;
+      const CACHE_EXPIRY = 30;
+  
+      // Check if data exists in cache
+      const cachedUserREQ = await redisClient.get(CACHE_KEY);
+  
+      if (cachedUserREQ) {
+        const cachedData = JSON.parse(cachedUserREQ);
+        const flattenedData = cachedData.data ? cachedData.data : cachedData;
+  
+        return res.status(200).send({
+          success: true,
+          data: flattenedData,
+          pagination: cachedData.pagination,
+          source: "cached",
+        });
+      }
+  
+      // Get total count for pagination
+      const totalItems = await db.request.count({
+        where: whereClause,
+      });
+  
+      // Fetch requests where the user is the requester with pagination
+      const requestList = await db.request.findAll({
+        where: whereClause,
+        attributes: ["id", "requestId", "status", "amount", "createdAt"],
+        include: [
+          {
+            model: db.user,
+            as: "userList",
+            attributes: ["id", "userId", "balance"],
+          },
+        ],
+        limit: limit,
+        offset: offset,
+        order: [["createdAt", "DESC"]], // Sort by creation date
+      });
+  
+      const totalPages = Math.ceil(totalItems / limit);
+  
+      // Prepare response data with pagination
+      let requestListForRedis = {
+        data: requestList,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: totalItems,
+          itemsPerPage: limit,
+        },
+      };
+  
+      // Store in cache
+      await redisClient.setEx(
+        CACHE_KEY,
+        CACHE_EXPIRY,
+        JSON.stringify(requestListForRedis)
+      );
+  
+      return res.status(200).send({
+        success: true,
+        data: requestList,
+        pagination: {
+          currentPage: page,
+          totalPages: totalPages,
+          totalItems: totalItems,
+          itemsPerPage: limit,
+        },
+      });
+    } catch (err) {
+      return res.status(500).send({ success: false, message: err.message });
+    }
+  },
 };
 
 module.exports = { requestController };
