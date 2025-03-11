@@ -52,6 +52,7 @@ const { setupMasterSocket } = require('./services/socket/master/masterSocket');
 const { setupMasterRequestSocket } = require('./services/socket/finance/request/masterRequestSocket');
 const { setupAdminSocket } = require('./services/socket/admin/adminSocket');
 const { setupUserSocket } = require('./services/socket/user/userSocket');
+const { setupUserRequestSocket } = require('./services/socket/finance/request/userRequestSocket');
 
 const server = http.createServer(app);
 
@@ -78,9 +79,10 @@ const server = http.createServer(app);
     // ------------------------ User ---------------------------------
 
     setupUserSocket();
+    setupUserRequestSocket();
 
 
-    server.listen((process.env.PORT || 8080), () => {
+    server.listen(process.env.PORT || 8080,'0.0.0.0', () => {
       console.log('Server is running', server.address().port);
     });
   } catch (error) {

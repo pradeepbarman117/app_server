@@ -38,7 +38,7 @@ router.post('/user/request/money',
 );
 
 
-///////     Get Request         //////
+///////  Get Request  //////
 
 // Get Master Request Money
 router.get('/master/request/money',
@@ -81,6 +81,34 @@ router.get('/auth/master/request/money/list',
   }
 )
 
+
+////////////  USER   ///////////////
+
+// Get Logged In User Requests
+router.get('/auth/user/request/money/list',
+  passport.authenticate('jwt',{session:false}),
+  authorizeRoles([roles.USER]),
+  async (req, res, next) => {
+    try {
+      await requestController.getAuthUserRequest(req,res);
+    }catch(err){
+      next(err);
+    }
+  }
+)
+
+// Get User Request List For Master (Authenticated Master);
+router.get('/master/user/request/money/list',
+  passport.authenticate('jwt',{session:false}),
+  authorizeRoles([roles.MASTER]),
+  async (req, res, next) => {
+    try {
+      await requestController.getAllUserRequest(req,res);
+    }catch(err){
+      next(err);
+    }
+  }
+)
 
 
 

@@ -24,7 +24,13 @@ const loginUser = async (req, res) => {
       designation: user.designation,
     });
 
-    return res.status(200).json({ token });
+    return res.status(200).send({ 
+      token,
+      user:{
+        id: user.id,
+        userId: user.userId,
+      }
+    });
   } catch (error) {
     console.log("error", error);
     return res.status(500).send({
@@ -345,7 +351,6 @@ const getTotalUser = async (req, res) => {
     return res.status(500).send({ message: err.message });
   }
 };
-
 
 // Get Auth User
 const getAuthUser = async (req, res) => {

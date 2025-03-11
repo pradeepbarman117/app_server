@@ -1,8 +1,9 @@
 const db = require("@models/index");
 const { v4: uuidv4 } = require("uuid");
 const { redisClient } = require("../../../config/redis");
-const { emitMasterRequestUpdated } = require("../../../services/socket/finance/request/masterRequestSocket");
+const { emitMasterRequestUpdated, emitMasterBalanceUpdated } = require("../../../services/socket/finance/request/masterRequestSocket");
 const { emitAdminBalanceUpdate } = require("../../../services/socket/admin/adminSocket");
+const { emitUserRequestUpdated, emitUserBalance } = require("../../../services/socket/finance/request/userRequestSocket");
 
 const processController = {
   masterRequest: async (req, res) => {
@@ -34,6 +35,9 @@ const processController = {
           .status(404)
           .send({ success: false, message: "Admin or Master not found" });
       }
+
+
+      let adminUpdatedBalance = admin.balance
 
       if (status === "approved") {
         if (admin.balance <= request.amount) {
@@ -70,6 +74,8 @@ const processController = {
           },
           { transaction: t }
         );
+
+        adminUpdatedBalance = admin.balance - request.amount
       } else {
         const UUID = uuidv4();
         await db.transaction.create(
@@ -88,9 +94,6 @@ const processController = {
         );
       }
 
-
-      const adminUpdatedBalance = admin.balance - request.amount
-
       const updatedRequest = await request.update({ status }, { transaction: t });
       await t.commit();
 
@@ -99,6 +102,8 @@ const processController = {
       await redisClient.del(`auth:master:request:list:${master.userId}`);
       await redisClient.del(`admin:${admin.id}`);
       await redisClient.del('balance:request:total');
+      await redisClient.del(`balance:request:master:${master.id}`);
+      await redisClient.del(`auth:master:request:list:${master.id}:page:${1}:limit:${20}`)
       emitMasterRequestUpdated(master.userId,updatedRequest);
       emitAdminBalanceUpdate(admin.id,adminUpdatedBalance);
 
@@ -168,7 +173,7 @@ const processController = {
       const master = await db.master.findByPk(request.receiverId, {
         transaction: t,
       });
-      const user = await db.master.findByPk(request.userId, {
+      const user = await db.user.findByPk(request.userId, {
         transaction: t,
       });
 
@@ -179,7 +184,8 @@ const processController = {
           .send({ success: false, message: "Master not found Or User" });
       }
 
-
+      let masterUpdatedBalance = master.balance;
+      let userUpdatedBalance = user.balance;
       if (status === "approved") {
 
         const UUID = uuidv4();
@@ -216,6 +222,10 @@ const processController = {
           transactionId: `T-${UUID}`,
         }, { transaction: t });
 
+        masterUpdatedBalance = master.balance - request.amount;
+        const updatedUser = await db.user.findByPk(user.id, { transaction: t });
+        userUpdatedBalance = updatedUser.balance;
+
       } else {
 
         const UUID = uuidv4();
@@ -233,12 +243,21 @@ const processController = {
         }, { transaction: t });
       }
 
-      await request.update({ status }, { transaction: t });
+      const updatedRequest = await request.update({ status }, { transaction: t });
       await t.commit();
+
+      await redisClient.del(`master:user:request:list:${master.id}`);
+      await redisClient.del(`balance:request:master:user:${master.id}`);
+      await redisClient.del(`user:${user.id}`);
+
+      emitUserRequestUpdated(master.userId,updatedRequest);
+      emitMasterBalanceUpdated(master.userId,masterUpdatedBalance);
+      emitUserBalance(user.id,userUpdatedBalance);
 
       return res.status(200).send({
         success: true,
         message: `Request ${status}`,
+        value: status
       });
 
     } catch (err) {

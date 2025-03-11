@@ -45,6 +45,12 @@ const emitUserUpdated = async (master) => {
   await redisClient.hSet("users", master.id.toString(), JSON.stringify(master));
 };
 
+const emitUserBalance = async ()=>{
+  const io = getSocketInstance();
+
+  // io.to(`user:${adminId}`).emit("adminBalanceUpdate", adminBalance);
+}
+
 const getUserFromRedis = async (userId) => {
   return JSON.parse(await redisClient.hGet("users", userId.toString()));
 };

@@ -118,8 +118,8 @@ db.master.hasMany(db.request, {foreignKey:'masterId', as:'requestList'});
 // db.admin.belongsTo(db.request, {foreignKey:'adminId', as:'requestList'});
 
 // // Request to User
-// db.request.hasMany(db.user, {foreignKey:'userId', as:'userList'});
-// db.user.belongsTo(db.request, {foreignKey:'userId', as:'requestList'});
+db.request.belongsTo(db.user, {foreignKey:'userId', as:'userList'});
+db.user.hasMany(db.request, {foreignKey:'userId', as:'requestList'});
 
 // // Request to Transaction
 db.request.hasMany(db.transaction, {foreignKey:'requestId', as:'transactionList'});

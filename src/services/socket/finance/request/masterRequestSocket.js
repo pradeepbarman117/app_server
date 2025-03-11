@@ -30,21 +30,35 @@ const emitMasterRequestAdded = async (request) => {
     // Emit only to the requesting master and the admin
     const masterId = `masterReq:${request.dataValues.masterList.dataValues.userId}`;
     io.to(masterId).emit("masterRequestAdded", request);
+
     io.emit("adminMasterRequestAdded", request);
-    io.emit("notify:admin:amount:changed",request);
+    io.emit("notify:admin:amount:changed", request);
+
+    io.to(masterId).emit("notify:master:amount:changed", request);
 };
 
-const emitMasterRequestUpdated = async (master,request) => {
+const emitMasterRequestUpdated = async (master, request) => {
     const io = getSocketInstance();
     const masterId = `masterReq:${master}`;
-    
+
     io.to(masterId).emit("masterRequestUpdated", request);
     io.emit("adminMasterRequestUpdated", request);
-    io.emit("notify:admin:amount:updated",request);
+    io.emit("notify:admin:amount:updated", request);
+    io.to(masterId).emit("notify:master:amount:updated", request);
 };
+
+
+const emitMasterBalanceUpdated = async (masterId,updatedBalance) => {
+    const io = getSocketInstance();
+
+    io.to(`masterReq:${masterId}`).emit("notify:master:balance:updated", updatedBalance);
+
+};
+
 
 module.exports = {
     setupMasterRequestSocket,
     emitMasterRequestAdded,
     emitMasterRequestUpdated,
+    emitMasterBalanceUpdated
 };

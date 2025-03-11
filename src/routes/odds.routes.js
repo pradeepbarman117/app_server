@@ -6,7 +6,7 @@ const sportList = require('./odds/list/sport.routes');
 const odiRoutes = require('./odds/cricket/odi/odi.routes');
 const betRoutes = require('./odds/bet.routes');
 const iplRoutes = require('./odds/cricket/ipl/ipl.routes');
-
+const mainOddsRoute = require('./odds/mainOdds.routes');
 
 
 // Football
@@ -32,7 +32,7 @@ router.use('/cricket',odiRoutes);
 router.use('/football',football);
 router.use('/baseball',baseballRoute);
 router.use('/cricket',iplRoutes);
-
+router.use('/all',mainOddsRoute);
 
 
 
