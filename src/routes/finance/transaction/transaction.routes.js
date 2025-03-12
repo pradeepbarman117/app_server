@@ -42,8 +42,18 @@ router.get(
 
 //////////////////////////// MASTER CAN RETRIEVE ONLY //////////////////////////////
 
-
-
+router.get(
+  "/transaction/auth/master/get/list",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles([roles.MASTER]),
+  async (req, res, next) => {
+    try {
+      await transactionControllers.getTransactionForMasterByMaster(req,res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 
 
